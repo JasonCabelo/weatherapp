@@ -32,7 +32,7 @@ const App = () => {
       } else {
         setTheme("day");
       }
-
+// Fetch 5-day forecast
       const forecastRes = await axios.get(
         `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`
       );
