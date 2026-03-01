@@ -10,11 +10,12 @@ const App = () => {
   const [forecast, setForecast] = useState([]);
   const [isDark, setIsDark] = useState(false);
   const [theme, setTheme] = useState("day");
+  const [showResults, setShowResults] = useState(false);
 
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
   const fetchWeather = async () => {
-    if (!city) return;
+    if (!city.trim()) return;
 
     try {
       const weatherRes = await axios.get(
@@ -23,12 +24,9 @@ const App = () => {
       const data = weatherRes.data;
       setWeather(data);
 
-      const hour = new Date().getHours();
-      const condition = data.weather[0].main.toLowerCase();
-      if (condition.includes("rain")) {
-        setTheme("rainy");
-      } else if (hour >= 18 || hour < 6) {
-        setTheme("night");
+      // Set theme based on dark mode toggle
+      if (isDark) {
+        setTheme("dark");
       } else {
         setTheme("day");
       }
@@ -41,11 +39,13 @@ const App = () => {
         item.dt_txt.includes("12:00:00")
       );
       setForecast(daily.slice(0, 5));
+      setShowResults(true);
     } catch (err) {
       console.error("Fetch error:", err);
       alert("City not found");
       setWeather(null);
       setForecast([]);
+      setShowResults(false);
     }
   };
 
@@ -53,8 +53,20 @@ const App = () => {
     if (e.key === "Enter") fetchWeather();
   };
 
+  const handleClear = () => {
+    setCity("");
+    setWeather(null);
+    setForecast([]);
+    setShowResults(false);
+    setTheme("day");
+  };
+
   const toggleDarkMode = () => {
     setIsDark(!isDark);
+    // Also update theme immediately
+    if (showResults) {
+      setTheme(!isDark ? "dark" : "day");
+    }
   };
 
   // Get weather emoji based on condition
@@ -105,18 +117,23 @@ const App = () => {
               onChange={(e) => setCity(e.target.value)}
               onKeyDown={handleKeyPress}
             />
+            {city && (
+              <button className="clear-btn" onClick={handleClear} title="Clear">
+                ✕
+              </button>
+            )}
           </div>
           
           <div className="search-buttons">
             <button className="search-btn" onClick={fetchWeather}>
-              Search Weather
+              Search City
             </button>
           </div>
         </div>
       </div>
 
       {/* Weather Results */}
-      {weather && (
+      {showResults && weather && (
         <div className="results-view">
           <div className="results-header">
             <h1 className="results-title">{weather.name}</h1>
@@ -185,7 +202,7 @@ const App = () => {
         </div>
       )}
 
-      {forecast.length > 0 && weather && (
+      {showResults && forecast.length > 0 && (
         <div className="legend-container">
           <p className="legend">Temperature · Humidity · Wind Speed</p>
         </div>
