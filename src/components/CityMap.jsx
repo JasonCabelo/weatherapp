@@ -4,7 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 
-const CityMap = ({ city, lat, lon, weatherIcon }) => {
+const CityMap = ({ city, lat, lon, weatherIcon, isDark }) => {
   const [nearbyCities, setNearbyCities] = useState([]);
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
@@ -24,7 +24,7 @@ const CityMap = ({ city, lat, lon, weatherIcon }) => {
     };
 
     fetchNearby();
-  }, [apiKey, lat, lon]);
+  }, [apiKey, lat, lon, isDark]);
 
   const createIcon = (iconCode, label) =>
     L.divIcon({
@@ -39,18 +39,23 @@ const CityMap = ({ city, lat, lon, weatherIcon }) => {
       iconAnchor: [50, 50],
     });
 
+  // Use CartoDB tiles for both light and dark modes
+  const tileUrl = isDark 
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
   return (
     <MapContainer
       center={[lat, lon]}
       zoom={8}
       scrollWheelZoom={false}
       className="leaflet-container"
+      key={`${lat}-${lon}`}
     >
-      {/* Satellite view tile layer */}
       <TileLayer
-        url="https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-        subdomains={["mt0", "mt1", "mt2", "mt3"]}
-        maxZoom={20}
+        url={tileUrl}
+        maxZoom={19}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
 
       {/* Main city marker */}

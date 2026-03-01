@@ -32,7 +32,7 @@ const App = () => {
       } else {
         setTheme("day");
       }
-// Fetch 5-day forecast
+
       const forecastRes = await axios.get(
         `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`
       );
@@ -57,79 +57,119 @@ const App = () => {
     setIsDark(!isDark);
   };
 
+  // Get weather emoji based on condition
+  const getWeatherEmoji = () => {
+    if (!weather) return "🌤️";
+    const condition = weather.weather[0].main.toLowerCase();
+    if (condition.includes("clear")) return "☀️";
+    if (condition.includes("cloud")) return "☁️";
+    if (condition.includes("rain")) return "🌧️";
+    if (condition.includes("thunder")) return "⛈️";
+    if (condition.includes("snow")) return "❄️";
+    if (condition.includes("mist") || condition.includes("fog")) return "🌫️";
+    return "🌤️";
+  };
+
   return (
     <div className={`container ${isDark ? "dark" : ""} ${theme}`}>
+      {/* Header */}
       <div className="header">
-        <h1 className="app-title">🌦️ Weather App</h1>
         <div className="toggle-wrapper">
-          <span className="toggle-label">{isDark ? "Dark" : "Light"}</span>
+          <span>{isDark ? "🌙" : "☀️"}</span>
           <label className="switch">
             <input
               type="checkbox"
               onChange={toggleDarkMode}
               checked={isDark}
             />
-            <span className="slider">
-            </span>
+            <span className="slider"></span>
           </label>
         </div>
       </div>
 
-      <div className="controls">
-        <input
-          type="text"
-          placeholder="Enter city..."
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          onKeyDown={handleKeyPress}
-        />
-        <button onClick={fetchWeather}>Get Weather</button>
+      {/* Main Content - Homepage */}
+      <div className="main-content">
+        <div className="logo-container">
+          <div className="weather-emoji">{getWeatherEmoji()}</div>
+          <div className="google-logo-text">Weather</div>
+        </div>
+
+        <div className="search-container">
+          <div className="search-bar">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search for a city..."
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              onKeyDown={handleKeyPress}
+            />
+          </div>
+          
+          <div className="search-buttons">
+            <button className="search-btn" onClick={fetchWeather}>
+              Search Weather
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* Weather Results */}
       {weather && (
-        <>
-          <div className="inline-grid">
-            <WeatherCard weather={weather} />
+        <div className="results-view">
+          <div className="results-header">
+            <h1 className="results-title">{weather.name}</h1>
+            <p className="results-subtitle">{weather.sys.country}</p>
+          </div>
 
-            <div className="forecast-grid">
-              {forecast.map((item, index) => {
-                const date = new Date(item.dt_txt);
-                const label =
-                  index === 0
-                    ? `Tomorrow - ${date.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}`
-                    : `${date.toLocaleDateString(undefined, {
-                        weekday: "long",
-                        month: "short",
-                        day: "numeric",
-                      })}`;
-                return (
-                  <div
-                    key={index}
-                    className="forecast-card"
-                    title={item.weather[0].description}
-                  >
-                    <h4>{label}</h4>
-                    <div className="forecast-icon">
-                      <img
-                        src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`}
-                        alt={item.weather[0].main}
-                      />
+          <div className="inline-grid">
+            {/* Main Weather Card */}
+            <div className="main-card">
+              <div className="main-icon">
+                <img
+                  src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@4x.png`}
+                  alt={weather.weather[0].main}
+                />
+              </div>
+              <h2>{weather.name}</h2>
+              <p className="temp">{Math.round(weather.main.temp)}°</p>
+              <p className="weather-desc">{weather.weather[0].description}</p>
+              <div className="weather-details">
+                <span className="detail-item">💧 {weather.main.humidity}%</span>
+                <span className="detail-item">💨 {Math.round(weather.wind.speed)} m/s</span>
+              </div>
+            </div>
+
+            {/* Forecast Cards */}
+            <div className="forecast-section">
+              <h3 className="forecast-title">5-Day Forecast</h3>
+              <div className="forecast-grid">
+                {forecast.map((item, index) => {
+                  const date = new Date(item.dt_txt);
+                  const label = index === 0
+                    ? "Tomorrow"
+                    : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+                  return (
+                    <div
+                      key={index}
+                      className="forecast-card"
+                    >
+                      <h4>{label}</h4>
+                      <div className="forecast-icon">
+                        <img
+                          src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`}
+                          alt={item.weather[0].main}
+                        />
+                      </div>
+                      <p className="forecast-temp">{Math.round(item.main.temp)}°</p>
+                      <p className="forecast-details">
+                        {Math.round(item.main.temp_min)}° / {Math.round(item.main.temp_max)}°
+                      </p>
                     </div>
-                    <p className="forecast-temp">
-                      {Math.round(item.main.temp)}°C
-                    </p>
-                    <p className="forecast-details">
-                      🌡️ {Math.round(item.main.temp_min)}° /{" "}
-                      {Math.round(item.main.temp_max)}°<br />
-                      💧 {item.main.humidity}%<br />
-                      💨 {Math.round(item.wind.speed)} m/s
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -139,15 +179,16 @@ const App = () => {
               lat={weather.coord.lat}
               lon={weather.coord.lon}
               weatherIcon={weather.weather[0].icon}
+              isDark={isDark}
             />
           </div>
-        </>
+        </div>
       )}
 
-      {forecast.length > 0 && (
-        <p className="legend">
-          🌡️ Temp Range 💧 Humidity 💨 Wind Speed
-        </p>
+      {forecast.length > 0 && weather && (
+        <div className="legend-container">
+          <p className="legend">Temperature · Humidity · Wind Speed</p>
+        </div>
       )}
     </div>
   );
